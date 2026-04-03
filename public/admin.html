@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理 - AI 心理咨询</title>
+    <style>
+        :root {
+            color-scheme: light;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #f5f6f8;
+            color: #1f1f1f;
+        }
+        .page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 16px;
+        }
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+            padding: 32px;
+        }
+        h1 {
+            margin: 0 0 24px;
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #d0d7de;
+            box-sizing: border-box;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+        button {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .actions button {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        .btn-secondary:hover {
+            background-color: #cbd5f5;
+        }
+        .btn-danger {
+            background-color: #dc2626;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+        .message {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            color: #1f2937;
+            display: none;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        .message.success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .dashboard {
+            width: 100%;
+            max-width: 1400px;
+            background-color: #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .dashboard-header {
+            padding: 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .last-update-time {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+            font-style: italic;
+        }
+        .dashboard-body {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-height: calc(100vh - 200px);
+        }
+        @media (min-width: 900px) {
+            .dashboard-body {
+                flex-direction: row;
+                min-height: 580px;
+                max-height: 700px;
+            }
+        }
+        .user-panel {
+            flex: 1;
+            border-right: 1px solid #e2e8f0;
+            min-width: 600px;
+            padding: 24px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        @media (max-width: 899px) {
+            .user-panel {
+                max-width: 100%;
+                min-width: 320px;
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+                max-height: 400px;
+            }
+        }
+        .history-panel {
+            flex: 2;
+            padding: 24px;
+            background-color: #f8fafc;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+        .panel-title.history-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .panel-title.history-title-row span {
+            flex: 1;
+        }
+        .panel-title.history-title-row button {
+            flex-shrink: 0;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        thead {
+            font-size: 14px;
+            color: #64748b;
+        }
+        th, td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th:first-child, td:first-child {
+            width: 50px;
+            min-width: 50px;
+        }
+        th:nth-child(2), td:nth-child(2) {
+            min-width: 100px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        th:nth-child(3), td:nth-child(3) {
+            min-width: 120px;
+        }
+        th:nth-child(4), td:nth-child(4) {
+            min-width: 70px;
+            width: 80px;
+        }
+        th:last-child, td:last-child {
+            width: auto;
+            min-width: 240px;
+        }
+        #code-view th:nth-child(2), 
+        #code-view td:nth-child(2) {
+            max-width: 150px;
+        }
+        #code-view th:nth-child(3), 
+        #code-view td:nth-child(3) {
+            width: 70px;
+            min-width: 70px;
+        }
+        #code-view th:nth-child(4), 
+        #code-view td:nth-child(4) {
+            min-width: 130px;
+        }
+        #code-view th:last-child, 
+        #code-view td:last-child {
+            width: auto;
+            min-width: 180px;
+        }
+        tbody tr {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+        tbody tr.active {
+            background-color: #e2e8f0;
+        }
+        .actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .actions button {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .history-board {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            min-height: 400px;
+            box-shadow: inset 0 0 0 1px #e2e8f0;
+            overflow-y: auto;
+        }
+        .history-placeholder {
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 80px;
+        }
+        .log-item {
+            max-width: 620px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.6;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+            position: relative;
+        }
+        .log-item.user {
+            margin-left: auto;
+            background-color: #2563eb;
+            color: #fff;
+        }
+        .log-item.ai {
+            margin-right: auto;
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+        .log-meta {
+            margin-top: 8px;
+            font-size: 12px;
+            opacity: 0.75;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .page {
+                padding: 20px 12px;
+            }
+
+            .card {
+                padding: 24px 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+
+            .dashboard {
+                max-width: 100%;
+                border-radius: 12px;
+            }
+
+            .dashboard-header {
+                padding: 16px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dashboard-header h1 {
+                font-size: 18px;
+                text-align: left;
+                width: 100%;
+            }
+
+            .dashboard-header button {
+                width: 100%;
+                margin-top: 8px;
+            }
+
+            .last-update-time {
+                font-size: 12px;
+            }
+
+            .dashboard-body {
+                max-height: none;
+            }
+
+            .user-panel,
+            .history-panel {
+                padding: 16px;
+                min-width: 100%;
+            }
+
+            .user-panel {
+                max-height: 350px;
+            }
+
+            .panel-title {
+                font-size: 16px;
+                margin-bottom: 12px;
+            }
+
+            .panel-title.history-title-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .panel-title.history-title-row button {
+                width: 100%;
+            }
+
+            .table-container {
+                margin-bottom: 12px;
+            }
+
+            table {
+                min-width: 500px;
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px 6px;
+            }
+
+            th:first-child, td:first-child {
+                width: 40px;
+                min-width: 40px;
+            }
+
+            .actions {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .actions button {
+                width: 100%;
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+
+            .history-board {
+                padding: 12px;
+                min-height: 300px;
+            }
+
+            .history-placeholder {
+                margin-top: 40px;
+                font-size: 14px;
+            }
+
+            .log-item {
+                max-width: 100%;
+                padding: 10px 12px;
+                margin-bottom: 12px;
+                font-size: 14px;
+            }
+
+            .log-meta {
+                font-size: 11px;
+            }
+
+            input[type="password"] {
+                font-size: 16px; /* 防止iOS自动缩放 */
+            }
+
+            button {
+                font-size: 15px;
+                padding: 12px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page {
+                padding: 16px 8px;
+            }
+
+            .card {
+                padding: 20px 16px;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            .dashboard {
+                border-radius: 8px;
+            }
+
+            .dashboard-header {
+                padding: 12px;
+            }
+
+            .dashboard-header h1 {
+                font-size: 16px;
+            }
+
+            table {
+                min-width: 450px;
+                font-size: 13px;
+            }
+
+            .log-item {
+                font-size: 13px;
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- 加载中提示 -->
+        <div id="loading" style="text-align: center;">
+            <div style="font-size: 24px; color: #64748b; margin-bottom: 16px;">🔐</div>
+            <div style="font-size: 16px; color: #64748b;">验证身份中...</div>
+        </div>
+        
+        <section id="dashboard" class="dashboard hidden" aria-live="polite">
+            <div class="dashboard-header">
+                <div>
+                    <div style="font-size: 22px; font-weight: 600;">AI 心理咨询后台</div>
+                    <div style="font-size: 14px; color: #64748b;">查看和管理已注册用户与聊天记录</div>
+                    <div id="last-update-time" class="last-update-time"></div>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="toggle-view" class="btn-secondary" type="button">切换到注册码管理</button>
+                    <button id="toggle-logs" class="btn-secondary" type="button">查看系统日志</button>
+                    <button id="toggle-performance" class="btn-secondary" type="button">查看性能统计</button>
+                    <button id="clear-all-data" class="btn-danger" type="button">清除所有数据</button>
+                    <button id="refresh-users" class="btn-secondary" type="button">刷新列表</button>
+                    <button id="admin-logout" class="btn-primary" type="button">退出后台</button>
+                </div>
+            </div>
+            <div class="dashboard-body">
+                <div id="user-view" class="user-panel">
+                    <div class="panel-title">注册用户</div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>姓名</th>
+                                    <th>注册时间</th>
+                                    <th>消息数</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div id="user-message" class="message" style="margin-top: 16px;"></div>
+                </div>
+                <div id="code-view" class="user-panel hidden">
+                    <div class="panel-title">注册码管理</div>
+                    <div style="margin-bottom: 16px;">
+                        <input type="text" id="new-code-input" placeholder="输入新的注册码" style="width: calc(100% - 100px); padding: 8px; border: 1px solid #d0d7de; border-radius: 8px; margin-right: 8px;">
+                        <button id="add-code-btn" class="btn-primary" type="button" style="padding: 8px 16px;">添加</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>注册码</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="codes-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div id="code-message" class="message" style="margin-top: 16px;"></div>
+                </div>
+                <div id="logs-view" class="user-panel hidden">
+                    <div class="panel-title">系统日志</div>
+                    <div style="margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <select id="log-level-filter" style="padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;">
+                            <option value="">全部级别</option>
+                            <option value="error">错误</option>
+                            <option value="warning">警告</option>
+                            <option value="info">信息</option>
+                        </select>
+                        <select id="log-category-filter" style="padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;">
+                            <option value="">全部分类</option>
+                            <option value="admin">后台管理</option>
+                            <option value="register">注册</option>
+                            <option value="login">登录</option>
+                            <option value="chat">聊天</option>
+                            <option value="ai_api">AI接口</option>
+                            <option value="database">数据库</option>
+                        </select>
+                        <input type="date" id="log-start-date" style="padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;">
+                        <input type="date" id="log-end-date" style="padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;">
+                        <button id="filter-logs-btn" class="btn-primary" type="button" style="padding: 6px 16px;">过滤</button>
+                        <button id="clear-logs-btn" class="btn-secondary" type="button" style="padding: 6px 16px;">清除旧日志</button>
+                    </div>
+                    <div id="log-stats" style="margin-bottom: 16px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 13px; display: none;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">日志统计</div>
+                        <div id="log-stats-content"></div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">ID</th>
+                                    <th style="width: 70px;">级别</th>
+                                    <th style="width: 100px;">分类</th>
+                                    <th style="min-width: 200px;">消息</th>
+                                    <th style="width: 140px;">时间</th>
+                                    <th style="width: 120px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div id="log-message" class="message" style="margin-top: 16px;"></div>
+                </div>
+                <div id="performance-view" class="user-panel hidden">
+                    <div class="panel-title">性能统计</div>
+                    <div style="margin-bottom: 16px; display: flex; gap: 8px; align-items: center;">
+                        <select id="perf-time-range" style="padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;">
+                            <option value="24h">最近24小时</option>
+                            <option value="7d">最近7天</option>
+                            <option value="30d">最近30天</option>
+                        </select>
+                        <button id="refresh-performance-btn" class="btn-primary" type="button" style="padding: 6px 16px;">刷新数据</button>
+                        <button id="clear-performance-btn" class="btn-secondary" type="button" style="padding: 6px 16px;">清除旧数据</button>
+                    </div>
+                    
+                    <!-- 核心指标卡片 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">WebSocket 平均连接时长</div>
+                            <div id="ws-avg-duration" style="font-size: 24px; font-weight: 600; color: #2563eb;">-</div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">总连接数: <span id="ws-total-connections">0</span></div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">AI API 平均延迟</div>
+                            <div id="ai-avg-duration" style="font-size: 24px; font-weight: 600; color: #059669;">-</div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">总调用次数: <span id="ai-total-calls">0</span></div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Token 总使用量</div>
+                            <div id="token-total" style="font-size: 24px; font-weight: 600; color: #dc2626;">-</div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">平均: <span id="token-avg">0</span> tokens/请求</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">API 平均响应时间</div>
+                            <div id="api-avg-duration" style="font-size: 24px; font-weight: 600; color: #7c3aed;">-</div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">总请求数: <span id="api-total-requests">0</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Token 使用详情 -->
+                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+                        <div style="font-weight: 600; margin-bottom: 12px; font-size: 14px;">Token 使用详情</div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; font-size: 13px;">
+                            <div>
+                                <div style="color: #64748b;">提示词 Tokens</div>
+                                <div id="token-prompt-total" style="font-size: 20px; font-weight: 600; color: #0f172a; margin-top: 4px;">-</div>
+                            </div>
+                            <div>
+                                <div style="color: #64748b;">生成 Tokens</div>
+                                <div id="token-completion-total" style="font-size: 20px; font-weight: 600; color: #0f172a; margin-top: 4px;">-</div>
+                            </div>
+                            <div>
+                                <div style="color: #64748b;">最大 Token 使用</div>
+                                <div id="token-max" style="font-size: 20px; font-weight: 600; color: #0f172a; margin-top: 4px;">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Token 用户 -->
+                    <div style="background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+                        <div style="font-weight: 600; margin-bottom: 12px; font-size: 14px;">Token 使用 Top 10 用户</div>
+                        <div id="top-token-users" style="font-size: 13px;">
+                            <div style="color: #94a3b8; text-align: center; padding: 20px;">暂无数据</div>
+                        </div>
+                    </div>
+
+                    <!-- API 端点响应时间 -->
+                    <div style="background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div style="font-weight: 600; margin-bottom: 12px; font-size: 14px;">API 端点响应时间</div>
+                        <div id="api-endpoints" style="font-size: 13px;">
+                            <div style="color: #94a3b8; text-align: center; padding: 20px;">暂无数据</div>
+                        </div>
+                    </div>
+
+                    <div id="performance-message" class="message" style="margin-top: 16px;"></div>
+                </div>
+                <div class="history-panel">
+                    <div class="panel-title history-title-row">
+                        <span id="history-title">聊天记录</span>
+                        <button id="export-history" class="btn-secondary" type="button" disabled>导出聊天记录</button>
+                    </div>
+                    <div id="history-board" class="history-board">
+                        <div class="history-placeholder">请选择左侧用户查看聊天记录</div>
+                    </div>
+                    <div id="history-message" class="message" style="margin-top: 16px;"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const dashboard = document.getElementById('dashboard');
+        const userMessage = document.getElementById('user-message');
+        const codeMessage = document.getElementById('code-message');
+        const logMessage = document.getElementById('log-message');
+        const usersTableBody = document.getElementById('users-table-body');
+        const codesTableBody = document.getElementById('codes-table-body');
+        const logsTableBody = document.getElementById('logs-table-body');
+        const historyBoard = document.getElementById('history-board');
+        const historyTitle = document.getElementById('history-title');
+        const refreshButton = document.getElementById('refresh-users');
+        const logoutButton = document.getElementById('admin-logout');
+        const clearAllDataButton = document.getElementById('clear-all-data');
+        const exportButton = document.getElementById('export-history');
+        const historyMessage = document.getElementById('history-message');
+        const toggleViewButton = document.getElementById('toggle-view');
+        const toggleLogsButton = document.getElementById('toggle-logs');
+        const togglePerformanceButton = document.getElementById('toggle-performance');
+        const userView = document.getElementById('user-view');
+        const codeView = document.getElementById('code-view');
+        const logsView = document.getElementById('logs-view');
+        const loadingElement = document.getElementById('loading');
+        const performanceView = document.getElementById('performance-view');
+        const addCodeBtn = document.getElementById('add-code-btn');
+        const newCodeInput = document.getElementById('new-code-input');
+        const filterLogsBtn = document.getElementById('filter-logs-btn');
+        const clearLogsBtn = document.getElementById('clear-logs-btn');
+        const logLevelFilter = document.getElementById('log-level-filter');
+        const logCategoryFilter = document.getElementById('log-category-filter');
+        const logStartDate = document.getElementById('log-start-date');
+        const logEndDate = document.getElementById('log-end-date');
+        const logStats = document.getElementById('log-stats');
+        const logStatsContent = document.getElementById('log-stats-content');
+        const lastUpdateTimeElement = document.getElementById('last-update-time');
+
+        let adminToken = localStorage.getItem('adminToken');
+        let selectedUserId = null;
+        let selectedStudentId = '';
+        let currentView = 'users'; // 'users', 'codes', or 'logs'
+        let lastUpdateTime = null;
+        let updateTimeInterval = null;
+
+        // 格式化相对时间
+        function formatRelativeTime(date) {
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000); // 秒
+
+            if (diff < 60) {
+                return `${diff} 秒前`;
+            } else if (diff < 3600) {
+                const minutes = Math.floor(diff / 60);
+                return `${minutes} 分钟前`;
+            } else if (diff < 86400) {
+                const hours = Math.floor(diff / 3600);
+                return `${hours} 小时前`;
+            } else {
+                const days = Math.floor(diff / 86400);
+                return `${days} 天前`;
+            }
+        }
+
+        // 更新刷新时间显示
+        function updateLastUpdateTime() {
+            if (lastUpdateTime && lastUpdateTimeElement) {
+                lastUpdateTimeElement.textContent = `最后更新于 ${formatRelativeTime(lastUpdateTime)}`;
+            }
+        }
+
+        // 设置最后更新时间
+        function setLastUpdateTime() {
+            lastUpdateTime = new Date();
+            updateLastUpdateTime();
+
+            // 清除旧的定时器
+            if (updateTimeInterval) {
+                clearInterval(updateTimeInterval);
+            }
+
+            // 每5秒更新一次时间显示
+            updateTimeInterval = setInterval(updateLastUpdateTime, 5000);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeAdmin);
+        refreshButton.addEventListener('click', () => {
+            if (currentView === 'users') {
+                fetchUsers(true);
+            } else if (currentView === 'codes') {
+                fetchRegistrationCodes(true);
+            } else if (currentView === 'logs') {
+                fetchLogs(true);
+            } else if (currentView === 'performance') {
+                fetchPerformanceStats(true);
+            }
+        });
+        logoutButton.addEventListener('click', handleLogout);
+        clearAllDataButton.addEventListener('click', handleClearAllData);
+        if (exportButton) {
+            exportButton.addEventListener('click', handleExportHistory);
+        }
+        toggleViewButton.addEventListener('click', toggleView);
+        toggleLogsButton.addEventListener('click', toggleLogsView);
+        togglePerformanceButton.addEventListener('click', togglePerformanceView);
+        addCodeBtn.addEventListener('click', handleAddCode);
+        filterLogsBtn.addEventListener('click', () => fetchLogs(true));
+        clearLogsBtn.addEventListener('click', handleClearOldLogs);
+        
+        // 性能统计相关事件
+        document.getElementById('refresh-performance-btn')?.addEventListener('click', () => fetchPerformanceStats(true));
+        document.getElementById('clear-performance-btn')?.addEventListener('click', handleClearPerformanceData);
+        document.getElementById('perf-time-range')?.addEventListener('change', (e) => {
+            fetchPerformanceStats(true);
+        });
+
+        function toggleView() {
+            if (currentView === 'users') {
+                currentView = 'codes';
+                userView.classList.add('hidden');
+                codeView.classList.remove('hidden');
+                logsView.classList.add('hidden');
+                performanceView.classList.add('hidden');
+                toggleViewButton.textContent = '切换到用户管理';
+                toggleLogsButton.textContent = '查看系统日志';
+                togglePerformanceButton.textContent = '查看性能统计';
+                refreshButton.textContent = '刷新列表';
+                fetchRegistrationCodes();
+            } else if (currentView === 'codes') {
+                currentView = 'users';
+                codeView.classList.add('hidden');
+                logsView.classList.add('hidden');
+                performanceView.classList.add('hidden');
+                userView.classList.remove('hidden');
+                toggleViewButton.textContent = '切换到注册码管理';
+                toggleLogsButton.textContent = '查看系统日志';
+                togglePerformanceButton.textContent = '查看性能统计';
+                refreshButton.textContent = '刷新列表';
+                fetchUsers();
+            }
+        }
+
+        function toggleLogsView() {
+            if (currentView !== 'logs') {
+                currentView = 'logs';
+                userView.classList.add('hidden');
+                codeView.classList.add('hidden');
+                logsView.classList.remove('hidden');
+                performanceView.classList.add('hidden');
+                toggleLogsButton.textContent = '返回管理界面';
+                togglePerformanceButton.textContent = '查看性能统计';
+                refreshButton.textContent = '刷新日志';
+                fetchLogs();
+                fetchLogStats();
+            } else {
+                currentView = 'users';
+                logsView.classList.add('hidden');
+                userView.classList.remove('hidden');
+                performanceView.classList.add('hidden');
+                toggleLogsButton.textContent = '查看系统日志';
+                toggleViewButton.textContent = '切换到注册码管理';
+                togglePerformanceButton.textContent = '查看性能统计';
+                refreshButton.textContent = '刷新列表';
+                fetchUsers();
+            }
+        }
+
+        function togglePerformanceView() {
+            if (currentView !== 'performance') {
+                currentView = 'performance';
+                userView.classList.add('hidden');
+                codeView.classList.add('hidden');
+                logsView.classList.add('hidden');
+                performanceView.classList.remove('hidden');
+                togglePerformanceButton.textContent = '返回管理界面';
+                toggleLogsButton.textContent = '查看系统日志';
+                refreshButton.textContent = '刷新数据';
+                fetchPerformanceStats();
+            } else {
+                currentView = 'users';
+                performanceView.classList.add('hidden');
+                userView.classList.remove('hidden');
+                togglePerformanceButton.textContent = '查看性能统计';
+                toggleLogsButton.textContent = '查看系统日志';
+                toggleViewButton.textContent = '切换到注册码管理';
+                refreshButton.textContent = '刷新列表';
+                fetchUsers();
+            }
+        }
+
+        async function initializeAdmin() {
+            // 显示加载中
+            if (loadingElement) {
+                loadingElement.style.display = 'block';
+            }
+            dashboard.classList.add('hidden');
+            
+            if (!adminToken) {
+                // 清除可能存在的无效 token
+                localStorage.removeItem('adminToken');
+                // 使用 replace 避免返回键回到此页面
+                window.location.replace('/admin-login.html');
+                return;
+            }
+            
+            // 先验证 token 是否有效，再显示界面
+            try {
+                const response = await fetch('/api/admin/users', {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    // Token 无效，清除并跳转
+                    localStorage.removeItem('adminToken');
+                    adminToken = null;
+                    window.location.replace('/admin-login.html');
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('获取用户失败');
+                }
+
+                // Token 有效，隐藏加载界面，显示后台界面并渲染数据
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                dashboard.classList.remove('hidden');
+                updateExportButtonState();
+                renderMessage(userMessage, '', false);
+                renderMessage(codeMessage, '', false);
+                renderMessage(historyMessage, '', false);
+                
+                const users = await response.json();
+                renderUsers(users);
+                setLastUpdateTime();
+            } catch (error) {
+                console.error('初始化失败:', error);
+                // 出错时也跳转到登录页
+                localStorage.removeItem('adminToken');
+                adminToken = null;
+                window.location.replace('/admin-login.html');
+            }
+        }
+
+        async function fetchUsers(forceRefresh = false) {
+            if (!adminToken) {
+                return;
+            }
+
+            if (forceRefresh) {
+                renderMessage(userMessage, '刷新中...', false);
+            }
+
+            try {
+                const response = await fetch('/api/admin/users', {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    renderMessage(userMessage, text || '获取用户失败', true);
+                    return;
+                }
+
+                const users = await response.json();
+                renderUsers(users);
+                renderMessage(userMessage, forceRefresh ? '列表已刷新' : '', false);
+                setLastUpdateTime(); // 更新刷新时间
+            } catch (error) {
+                console.error(error);
+                renderMessage(userMessage, '无法加载用户，请检查网络', true);
+            }
+        }
+
+        async function fetchRegistrationCodes(forceRefresh = false) {
+            if (!adminToken) {
+                return;
+            }
+
+            if (forceRefresh) {
+                renderMessage(codeMessage, '刷新中...', false);
+            }
+
+            try {
+                const response = await fetch('/api/admin/registration-codes', {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    renderMessage(codeMessage, text || '获取注册码失败', true);
+                    return;
+                }
+
+                const codes = await response.json();
+                renderCodes(codes);
+                renderMessage(codeMessage, forceRefresh ? '列表已刷新' : '', false);
+                setLastUpdateTime(); // 更新刷新时间
+            } catch (error) {
+                console.error(error);
+                renderMessage(codeMessage, '无法加载注册码，请检查网络', true);
+            }
+        }
+
+        function renderCodes(codes) {
+            codesTableBody.innerHTML = '';
+            if (!Array.isArray(codes) || codes.length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 5;
+                cell.textContent = '暂无注册码';
+                cell.style.textAlign = 'center';
+                row.appendChild(cell);
+                codesTableBody.appendChild(row);
+                return;
+            }
+
+            codes.forEach(code => {
+                const row = document.createElement('tr');
+                const statusText = code.is_active === 1 ? '启用' : '禁用';
+                const toggleText = code.is_active === 1 ? '禁用' : '启用';
+                
+                row.innerHTML = `
+                    <td>${code.id}</td>
+                    <td title="${code.code}">${code.code}</td>
+                    <td>${statusText}</td>
+                    <td>${formatDateTime(code.created_at)}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-secondary" data-action="toggle" data-id="${code.id}" type="button">${toggleText}</button>
+                            <button class="btn-secondary" data-action="delete" data-id="${code.id}" type="button">删除</button>
+                        </div>
+                    </td>
+                `;
+
+                row.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', (event) => {
+                        const action = event.target.dataset.action;
+                        const id = Number(event.target.dataset.id);
+                        if (action === 'toggle') {
+                            toggleCode(id);
+                        } else if (action === 'delete') {
+                            confirmDeleteCode(id, code.code);
+                        }
+                    });
+                });
+
+                codesTableBody.appendChild(row);
+            });
+        }
+
+        async function handleAddCode() {
+            const code = newCodeInput.value.trim();
+            if (!code) {
+                renderMessage(codeMessage, '请输入注册码', true);
+                return;
+            }
+
+            renderMessage(codeMessage, '正在添加...', false);
+
+            try {
+                const response = await fetch('/api/admin/registration-codes', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code })
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    renderMessage(codeMessage, text || '添加失败', true);
+                    return;
+                }
+
+                renderMessage(codeMessage, '注册码添加成功', false);
+                newCodeInput.value = '';
+                fetchRegistrationCodes();
+            } catch (error) {
+                console.error(error);
+                renderMessage(codeMessage, '添加失败，请稍后重试', true);
+            }
+        }
+
+        async function toggleCode(codeId) {
+            if (!adminToken) {
+                return;
+            }
+
+            renderMessage(codeMessage, '正在更新...', false);
+
+            try {
+                const response = await fetch(`/api/admin/registration-codes/${codeId}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    renderMessage(codeMessage, text || '更新失败', true);
+                    return;
+                }
+
+                renderMessage(codeMessage, '状态已更新', false);
+                fetchRegistrationCodes();
+            } catch (error) {
+                console.error(error);
+                renderMessage(codeMessage, '更新失败，请稍后重试', true);
+            }
+        }
+
+        function confirmDeleteCode(codeId, code) {
+            const confirmed = window.confirm(`确定要删除注册码 "${code}" 吗？`);
+            if (!confirmed) {
+                return;
+            }
+            deleteCode(codeId);
+        }
+
+        async function deleteCode(codeId) {
+            if (!adminToken) {
+                return;
+            }
+
+            renderMessage(codeMessage, '正在删除...', false);
+
+            try {
+                const response = await fetch(`/api/admin/registration-codes/${codeId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok && response.status !== 204) {
+                    const text = await response.text();
+                    renderMessage(codeMessage, text || '删除失败', true);
+                    return;
+                }
+
+                renderMessage(codeMessage, '注册码删除成功', false);
+                fetchRegistrationCodes();
+            } catch (error) {
+                console.error(error);
+                renderMessage(codeMessage, '删除失败，请稍后重试', true);
+            }
+        }
+
+        function renderUsers(users) {
+            usersTableBody.innerHTML = '';
+            if (!Array.isArray(users) || users.length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 5;
+                cell.textContent = '当前没有注册用户';
+                cell.style.textAlign = 'center';
+                row.appendChild(cell);
+                usersTableBody.appendChild(row);
+                historyBoard.innerHTML = '<div class="history-placeholder">暂无用户</div>';
+                selectedUserId = null;
+                selectedStudentId = '';
+                updateExportButtonState();
+                renderMessage(historyMessage, '', false);
+                return;
+            }
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.dataset.userId = user.id;
+
+                if (Number(user.id) === selectedUserId) {
+                    row.classList.add('active');
+                    selectedStudentId = user.name;
+                }
+
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td title="${user.name}">${user.name}</td>
+                    <td>${formatDateTime(user.created_at)}</td>
+                    <td>${user.message_count}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-secondary" data-action="view" type="button">查看</button>
+                            <button class="btn-secondary" data-action="clear-history" type="button">清除记录</button>
+                            <button class="btn-secondary" data-action="reset-password" type="button">重置密码</button>
+                            <button class="btn-secondary" data-action="delete" type="button">删除</button>
+                        </div>
+                    </td>
+                `;
+
+                row.addEventListener('click', (event) => {
+                    const action = event.target.dataset.action;
+                    if (action === 'delete') {
+                        event.stopPropagation();
+                        confirmDelete(user.id, user.name);
+                        return;
+                    }
+                    if (action === 'clear-history') {
+                        event.stopPropagation();
+                        confirmClearUserHistory(user.id, user.name);
+                        return;
+                    }
+                    if (action === 'reset-password') {
+                        event.stopPropagation();
+                        promptResetPassword(user.id, user.name);
+                        return;
+                    }
+                    if (action === 'view') {
+                        event.stopPropagation();
+                    }
+                    selectUser(user.id, user.name);
+                });
+
+                usersTableBody.appendChild(row);
+            });
+
+            const hasSelected = users.some((user) => Number(user.id) === selectedUserId);
+            if (!hasSelected) {
+                selectedUserId = null;
+                selectedStudentId = '';
+                updateExportButtonState();
+                renderMessage(historyMessage, '', false);
+                historyTitle.textContent = '聊天记录';
+                historyBoard.innerHTML = '<div class="history-placeholder">请选择左侧用户查看聊天记录</div>';
+            } else {
+                updateExportButtonState();
+            }
+        }
+
+        async function selectUser(userId, userName) {
+            selectedUserId = Number(userId);
+            selectedStudentId = userName;
+            Array.from(usersTableBody.children).forEach(tr => {
+                tr.classList.toggle('active', Number(tr.dataset.userId) === selectedUserId);
+            });
+            historyTitle.textContent = `聊天记录 - ${userName}`;
+            historyBoard.innerHTML = '<div class="history-placeholder">加载聊天记录中...</div>';
+            updateExportButtonState();
+            renderMessage(historyMessage, '', false);
+
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/history`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    historyBoard.innerHTML = `<div class="history-placeholder">${text || '获取聊天记录失败'}</div>`;
+                    return;
+                }
+
+                const history = await response.json();
+                console.log('=== 聊天记录数据 ===');
+                console.log('总条数:', history.length);
+                history.forEach((item, idx) => {
+                    console.log(`[${idx}] sender: "${item.sender}", message: ${item.message.substring(0, 50)}...`);
+                });
+                console.log('==================');
+                renderHistory(history);
+            } catch (error) {
+                console.error(error);
+                historyBoard.innerHTML = '<div class="history-placeholder">加载失败，请稍后再试</div>';
+            }
+        }
+
+        function renderHistory(history) {
+            if (!Array.isArray(history) || history.length === 0) {
+                historyBoard.innerHTML = '<div class="history-placeholder">此用户暂无聊天记录</div>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            history.forEach((item, index) => {
+                const entry = document.createElement('div');
+                
+                // 更严格的 sender 判断，支持多种可能的值
+                const isUser = item.sender === 'user';
+                const isAI = item.sender === 'ai' || item.sender === 'assistant';
+                
+                // 如果 sender 字段异常，尝试根据消息顺序推断（用户和AI交替）
+                let senderClass;
+                if (isUser) {
+                    senderClass = 'user';
+                } else if (isAI) {
+                    senderClass = 'ai';
+                } else {
+                    // 异常情况：根据序号推断（偶数=用户，奇数=AI）
+                    console.warn(`异常的 sender 值: "${item.sender}" (索引: ${index})`);
+                    senderClass = (index % 2 === 0) ? 'user' : 'ai';
+                }
+                
+                entry.classList.add('log-item', senderClass);
+
+                const content = document.createElement('div');
+                content.textContent = item.message;
+                entry.appendChild(content);
+
+                const meta = document.createElement('div');
+                meta.classList.add('log-meta');
+                const senderLabel = senderClass === 'user' ? '用户' : 'AI';
+                meta.textContent = `${senderLabel} · ${formatDateTime(item.timestamp)}`;
+                entry.appendChild(meta);
+
+                fragment.appendChild(entry);
+            });
+
+            historyBoard.innerHTML = '';
+            historyBoard.appendChild(fragment);
+            historyBoard.scrollTop = historyBoard.scrollHeight;
+        }
+
+        function confirmDelete(userId, studentId) {
+            const confirmed = window.confirm(`确定要删除姓名为 ${studentId} 的用户及其聊天记录吗？`);
+            if (!confirmed) {
+                return;
+            }
+            deleteUser(userId);
+        }
+
+        function confirmClearUserHistory(userId, studentId) {
+            const confirmed = window.confirm(`确定要清除姓名为 ${studentId} 的所有聊天记录吗？此操作不可恢复！`);
+            if (!confirmed) {
+                return;
+            }
+            clearUserHistory(userId);
+        }
+
+        async function clearUserHistory(userId) {
+            if (!adminToken) {
+                return;
+            }
+
+            renderMessage(userMessage, '正在清除聊天记录...', false);
+
+            try {
+                const response = await fetch(`/api/admin/user/${userId}/chat-history`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    renderMessage(userMessage, text || '清除聊天记录失败', true);
+                    return;
+                }
+
+                const result = await response.json();
+                renderMessage(userMessage, result.message || '聊天记录已清除', false);
+                
+                // 刷新用户列表和历史记录
+                await fetchUsers();
+                if (selectedUserId === userId) {
+                    historyBoard.innerHTML = '<div class="history-placeholder">该用户的聊天记录已被清除</div>';
+                }
+            } catch (error) {
+                console.error(error);
+                renderMessage(userMessage, '清除聊天记录失败，请稍后重试', true);
+            }
+        }
+
+        function promptResetPassword(userId, studentId) {
+            const newPassword = window.prompt(`请为姓名 ${studentId} 设置新密码（不少于8位）：`);
+            if (!newPassword) {
+                return;
+            }
+            if (newPassword.length < 8) {
+                renderMessage(userMessage, '密码长度不得小于8位', true);
+                return;
+            }
+            resetPassword(userId, newPassword);
+        }
+
+        async function resetPassword(userId, newPassword) {
+            if (!adminToken) {
+                return;
+            }
+
+            renderMessage(userMessage, '正在重置密码...', false);
+
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ new_password: newPassword })
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    renderMessage(userMessage, text || '重置密码失败', true);
+                    return;
+                }
+
+                renderMessage(userMessage, '密码重置成功', false);
+            } catch (error) {
+                console.error(error);
+                renderMessage(userMessage, '重置密码失败，请稍后重试', true);
+            }
+        }
+
+        async function handleExportHistory() {
+            if (!adminToken || !selectedUserId) {
+                return;
+            }
+            renderMessage(historyMessage, '正在导出聊天记录...', false);
+            try {
+                const response = await fetch(`/api/admin/users/${selectedUserId}/history/export`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    renderMessage(historyMessage, text || '导出失败', true);
+                    return;
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                const fileSuffix = selectedStudentId ? selectedStudentId : `user_${selectedUserId}`;
+                link.href = downloadUrl;
+                link.download = `chat_history_${fileSuffix}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(downloadUrl);
+                renderMessage(historyMessage, '聊天记录已导出', false);
+            } catch (error) {
+                console.error(error);
+                renderMessage(historyMessage, '导出失败，请稍后再试', true);
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!adminToken) {
+                return;
+            }
+            renderMessage(userMessage, '正在删除用户...', false);
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (response.status === 404) {
+                    renderMessage(userMessage, '用户不存在或已被删除', true);
+                    return;
+                }
+
+                if (!response.ok && response.status !== 204) {
+                    const text = await response.text();
+                    renderMessage(userMessage, text || '删除失败', true);
+                    return;
+                }
+
+                renderMessage(userMessage, '用户删除成功', false);
+                if (Number(userId) === selectedUserId) {
+                    selectedUserId = null;
+                    selectedStudentId = '';
+                    historyBoard.innerHTML = '<div class="history-placeholder">请选择左侧用户查看聊天记录</div>';
+                    historyTitle.textContent = '聊天记录';
+                    updateExportButtonState();
+                    renderMessage(historyMessage, '', false);
+                }
+                fetchUsers();
+            } catch (error) {
+                console.error(error);
+                renderMessage(userMessage, '删除失败，请稍后重试', true);
+            }
+        }
+
+        function handleLogout() {
+            // 清理定时器
+            if (updateTimeInterval) {
+                clearInterval(updateTimeInterval);
+                updateTimeInterval = null;
+            }
+            
+            // 立即清除 token 和状态
+            localStorage.removeItem('adminToken');
+            adminToken = null;
+            selectedUserId = null;
+            selectedStudentId = '';
+            
+            // 使用 replace 避免返回键回到后台页面
+            window.location.replace('/admin-login.html');
+        }
+
+        async function handleClearAllData() {
+            const firstConfirm = window.confirm('⚠️ 警告：此操作将清除所有聊天记录、错误日志和性能指标！\n\n此操作不可恢复，确定要继续吗？');
+            if (!firstConfirm) {
+                return;
+            }
+
+            const confirmationText = window.prompt('请输入 "CLEAR_ALL_DATA" 以确认清除所有数据：');
+            if (confirmationText !== 'CLEAR_ALL_DATA') {
+                if (confirmationText !== null) {
+                    alert('确认文本不正确，操作已取消');
+                }
+                return;
+            }
+
+            if (!adminToken) {
+                return;
+            }
+
+            renderMessage(userMessage, '正在清除所有数据...', false);
+
+            try {
+                const response = await fetch('/api/admin/database/clear-all', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ confirmation: 'CLEAR_ALL_DATA' })
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    renderMessage(userMessage, text || '清除数据失败', true);
+                    return;
+                }
+
+                const result = await response.json();
+                renderMessage(userMessage, result.message || '所有数据已清除', false);
+                
+                // 刷新所有视图
+                await fetchUsers();
+                historyBoard.innerHTML = '<div class="history-placeholder">所有数据已被清除</div>';
+                selectedUserId = null;
+                selectedStudentId = '';
+                updateExportButtonState();
+            } catch (error) {
+                console.error(error);
+                renderMessage(userMessage, '清除数据失败，请稍后重试', true);
+            }
+        }
+
+        function updateExportButtonState() {
+            if (!exportButton) {
+                return;
+            }
+            exportButton.disabled = !selectedUserId;
+        }
+
+        function renderMessage(target, text, isError) {
+            if (!target) {
+                return;
+            }
+            if (!text) {
+                target.style.display = 'none';
+                return;
+            }
+            target.textContent = text;
+            target.className = `message ${isError ? 'error' : 'success'}`;
+            target.style.display = 'block';
+        }
+
+        function formatDateTime(value) {
+            if (!value) {
+                return '--';
+            }
+            // 数据库返回的是 UTC 时间，需要明确标记为 UTC
+            const date = new Date(value.endsWith('Z') ? value : value + 'Z');
+            if (Number.isNaN(date.getTime())) {
+                return value;
+            }
+            
+            // 转换到北京时间 (UTC+8)
+            const beijingTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+            
+            // 格式化为本地显示
+            return beijingTime.toLocaleString('zh-CN', {
+                timeZone: 'UTC',  // 因为已经手动转换了，所以用 UTC 格式化
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // ==================== 日志管理功能 ====================
+        
+        async function fetchLogs(showMessage = false) {
+            try {
+                const level = logLevelFilter.value;
+                const category = logCategoryFilter.value;
+                const startDate = logStartDate.value;
+                const endDate = logEndDate.value;
+                
+                let url = '/api/admin/logs?limit=100';
+                if (level) url += `&level=${level}`;
+                if (category) url += `&category=${category}`;
+                if (startDate) url += `&startDate=${startDate}T00:00:00Z`;
+                if (endDate) url += `&endDate=${endDate}T23:59:59Z`;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('获取日志失败');
+                }
+
+                const data = await response.json();
+                renderLogs(data.logs);
+                
+                if (showMessage) {
+                    renderMessage(logMessage, '日志刷新成功', false);
+                }
+                
+                setLastUpdateTime(); // 更新刷新时间
+            } catch (error) {
+                console.error(error);
+                renderMessage(logMessage, '获取日志失败，请稍后重试', true);
+            }
+        }
+
+        async function fetchLogStats() {
+            try {
+                const response = await fetch('/api/admin/logs/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('获取统计失败');
+                }
+
+                const data = await response.json();
+                renderLogStats(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function renderLogs(logs) {
+            logsTableBody.innerHTML = '';
+            
+            if (!logs || logs.length === 0) {
+                logsTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8;">暂无日志记录</td></tr>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                
+                const levelColor = {
+                    'error': '#dc2626',
+                    'warning': '#ea580c',
+                    'info': '#2563eb'
+                }[log.level] || '#64748b';
+                
+                const levelText = {
+                    'error': '错误',
+                    'warning': '警告',
+                    'info': '信息'
+                }[log.level] || log.level;
+
+                row.innerHTML = `
+                    <td>${log.id}</td>
+                    <td><span style="color: ${levelColor}; font-weight: 600;">${levelText}</span></td>
+                    <td>${log.category}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(log.message)}">${escapeHtml(log.message)}</td>
+                    <td style="font-size: 12px;">${formatDateTime(log.created_at)}</td>
+                    <td class="actions">
+                        <button class="btn-secondary view-log-detail-btn" 
+                            data-log-id="${log.id}"
+                            data-log-message="${escapeHtml(log.message)}"
+                            data-log-stack="${escapeHtml(log.stack || '')}"
+                            data-log-endpoint="${escapeHtml(log.endpoint || '')}"
+                            data-log-method="${escapeHtml(log.method || '')}"
+                            data-log-user-name="${escapeHtml(log.name || '')}"
+                            data-log-ip="${escapeHtml(log.ip_address || '')}">详情</button>
+                        <button class="btn-secondary" onclick="deleteLog(${log.id})">删除</button>
+                    </td>
+                `;
+                
+                logsTableBody.appendChild(row);
+            });
+            
+            // 为所有详情按钮添加事件监听器
+            document.querySelectorAll('.view-log-detail-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.logId;
+                    const message = this.dataset.logMessage;
+                    const stack = this.dataset.logStack;
+                    const endpoint = this.dataset.logEndpoint;
+                    const method = this.dataset.logMethod;
+                    const userName = this.dataset.logUserName;
+                    const ipAddress = this.dataset.logIp;
+                    
+                    viewLogDetail(id, message, stack, endpoint, method, userName, ipAddress);
+                });
+            });
+        }
+
+        function renderLogStats(stats) {
+            if (!stats) return;
+            
+            logStats.style.display = 'block';
+            
+            let html = '<div style="display: flex; gap: 24px; flex-wrap: wrap;">';
+            
+            // 按级别统计
+            if (stats.byLevel && stats.byLevel.length > 0) {
+                html += '<div><strong>按级别:</strong> ';
+                html += stats.byLevel.map(item => {
+                    const color = {
+                        'error': '#dc2626',
+                        'warning': '#ea580c',
+                        'info': '#2563eb'
+                    }[item.level] || '#64748b';
+                    return `<span style="color: ${color};">${item.level}: ${item.count}</span>`;
+                }).join(', ');
+                html += '</div>';
+            }
+            
+            // 最近24小时
+            if (stats.last24Hours) {
+                html += '<div><strong>最近24小时:</strong> ';
+                html += `总计 ${stats.last24Hours.total || 0}, `;
+                html += `<span style="color: #dc2626;">错误 ${stats.last24Hours.errors || 0}</span>, `;
+                html += `<span style="color: #ea580c;">警告 ${stats.last24Hours.warnings || 0}</span>, `;
+                html += `<span style="color: #2563eb;">信息 ${stats.last24Hours.info || 0}</span>`;
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            
+            // 按分类统计
+            if (stats.byCategory && stats.byCategory.length > 0) {
+                html += '<div style="margin-top: 8px;"><strong>按分类:</strong> ';
+                html += stats.byCategory.map(item => `${item.category}: ${item.count}`).join(', ');
+                html += '</div>';
+            }
+            
+            logStatsContent.innerHTML = html;
+        }
+
+        async function deleteLog(logId) {
+            if (!confirm('确定要删除这条日志吗？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/logs/${logId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('删除失败');
+                }
+
+                renderMessage(logMessage, '日志删除成功', false);
+                fetchLogs();
+            } catch (error) {
+                console.error(error);
+                renderMessage(logMessage, '删除日志失败，请稍后重试', true);
+            }
+        }
+
+        async function handleClearOldLogs() {
+            const days = prompt('请输入要保留的天数（将删除更早的日志）：', '30');
+            
+            if (!days) {
+                return;
+            }
+
+            const daysNum = parseInt(days, 10);
+            if (isNaN(daysNum) || daysNum < 1) {
+                alert('请输入有效的天数');
+                return;
+            }
+
+            if (!confirm(`确定要删除 ${daysNum} 天前的所有日志吗？此操作不可恢复！`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/logs/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ days: daysNum })
+                });
+
+                if (response.status === 401) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('清除失败');
+                }
+
+                const data = await response.json();
+                renderMessage(logMessage, data.message || '日志清除成功', false);
+                fetchLogs();
+                fetchLogStats();
+            } catch (error) {
+                console.error(error);
+                renderMessage(logMessage, '清除日志失败，请稍后重试', true);
+            }
+        }
+
+        function viewLogDetail(id, message, stack, endpoint, method, userName, ipAddress) {
+            let detailHtml = `<div style="max-width: 600px; line-height: 1.8;">`;
+            detailHtml += `<p><strong>ID:</strong> ${id}</p>`;
+            detailHtml += `<p><strong>消息:</strong> ${message}</p>`;
+            if (endpoint) detailHtml += `<p><strong>端点:</strong> ${method} ${endpoint}</p>`;
+            if (userName) detailHtml += `<p><strong>姓名:</strong> ${userName}</p>`;
+            if (ipAddress) detailHtml += `<p><strong>IP:</strong> ${ipAddress}</p>`;
+            if (stack && stack !== 'null' && stack !== '') {
+                detailHtml += `<p><strong>堆栈:</strong></p><pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 11px;">${stack}</pre>`;
+            }
+            detailHtml += `</div>`;
+            
+            const detailWindow = window.open('', '日志详情', 'width=700,height=600');
+            detailWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>日志详情 #${id}</title>
+                    <style>
+                        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; }
+                        pre { white-space: pre-wrap; word-wrap: break-word; }
+                    </style>
+                </head>
+                <body>
+                    <h2>日志详情 #${id}</h2>
+                    ${detailHtml}
+                </body>
+                </html>
+            `);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 转义 JavaScript 字符串中的特殊字符
+        function escapeJs(text) {
+            if (!text) return '';
+            return text
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r')
+                .replace(/\t/g, '\\t');
+        }
+
+        // ========== 性能统计功能 ==========
+        
+        async function fetchPerformanceStats(showLoading = false) {
+            const performanceMessage = document.getElementById('performance-message');
+            if (showLoading) {
+                renderMessage(performanceMessage, '加载中...', false);
+            }
+
+            try {
+                const timeRange = document.getElementById('perf-time-range').value;
+                const response = await fetch(`/api/admin/performance/stats?timeRange=${timeRange}`, {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('获取性能统计失败');
+                }
+
+                const data = await response.json();
+                renderPerformanceStats(data.stats);
+                performanceMessage.style.display = 'none';
+            } catch (error) {
+                console.error(error);
+                renderMessage(performanceMessage, '获取性能统计失败，请稍后重试', true);
+            }
+        }
+
+        function renderPerformanceStats(stats) {
+            // WebSocket 连接统计
+            if (stats.websocket && (stats.websocket.total_connections || 0) > 0) {
+                document.getElementById('ws-avg-duration').textContent = 
+                    formatDuration(stats.websocket.avg_duration || 0);
+                document.getElementById('ws-total-connections').textContent = 
+                    stats.websocket.total_connections || 0;
+            } else {
+                document.getElementById('ws-avg-duration').textContent = '-';
+                document.getElementById('ws-total-connections').textContent = '0';
+            }
+
+            // AI API 调用统计
+            if (stats.aiApi && (stats.aiApi.total_calls || 0) > 0) {
+                document.getElementById('ai-avg-duration').textContent = 
+                    formatDuration(stats.aiApi.avg_duration || 0);
+                document.getElementById('ai-total-calls').textContent = 
+                    stats.aiApi.total_calls || 0;
+            } else {
+                document.getElementById('ai-avg-duration').textContent = '-';
+                document.getElementById('ai-total-calls').textContent = '0';
+            }
+
+            // Token 使用统计
+            if (stats.tokens && (stats.tokens.total_tokens || 0) > 0) {
+                document.getElementById('token-total').textContent = 
+                    formatNumber(stats.tokens.total_tokens);
+                document.getElementById('token-avg').textContent = 
+                    Math.round(stats.tokens.avg_tokens || 0);
+                document.getElementById('token-prompt-total').textContent = 
+                    formatNumber(stats.tokens.total_prompt_tokens || 0);
+                document.getElementById('token-completion-total').textContent = 
+                    formatNumber(stats.tokens.total_completion_tokens || 0);
+                document.getElementById('token-max').textContent = 
+                    formatNumber(stats.tokens.max_tokens || 0);
+            } else {
+                document.getElementById('token-total').textContent = '-';
+                document.getElementById('token-avg').textContent = '0';
+                document.getElementById('token-prompt-total').textContent = '-';
+                document.getElementById('token-completion-total').textContent = '-';
+                document.getElementById('token-max').textContent = '-';
+            }
+
+            // API 响应时间统计
+            if (stats.api && stats.api.overall && (stats.api.overall.total_requests || 0) > 0) {
+                document.getElementById('api-avg-duration').textContent = 
+                    formatDuration(stats.api.overall.avg_duration || 0);
+                document.getElementById('api-total-requests').textContent = 
+                    stats.api.overall.total_requests || 0;
+            } else {
+                document.getElementById('api-avg-duration').textContent = '-';
+                document.getElementById('api-total-requests').textContent = '0';
+            }
+
+            // Top Token 用户
+            const topUsersContainer = document.getElementById('top-token-users');
+            if (stats.tokens && stats.tokens.topUsers && stats.tokens.topUsers.length > 0) {
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<tr style="border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 12px;"><th style="text-align: left; padding: 8px;">用户 ID</th><th style="text-align: right; padding: 8px;">Token 总量</th><th style="text-align: right; padding: 8px;">请求次数</th></tr>';
+                
+                stats.tokens.topUsers.forEach(user => {
+                    html += `<tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 8px;">${user.user_id}</td>
+                        <td style="text-align: right; padding: 8px; font-weight: 600;">${formatNumber(user.total_tokens)}</td>
+                        <td style="text-align: right; padding: 8px; color: #64748b;">${user.request_count}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                topUsersContainer.innerHTML = html;
+            } else {
+                topUsersContainer.innerHTML = '<div style="color: #94a3b8; text-align: center; padding: 20px;">暂无数据</div>';
+            }
+
+            // API 端点响应时间
+            const endpointsContainer = document.getElementById('api-endpoints');
+            if (stats.api && stats.api.byEndpoint && stats.api.byEndpoint.length > 0) {
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<tr style="border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 12px;"><th style="text-align: left; padding: 8px;">端点</th><th style="text-align: right; padding: 8px;">平均响应时间</th><th style="text-align: right; padding: 8px;">请求数</th><th style="text-align: right; padding: 8px;">错误数</th></tr>';
+                
+                stats.api.byEndpoint.slice(0, 10).forEach(endpoint => {
+                    html += `<tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 8px; font-family: monospace; font-size: 12px;">${escapeHtml(endpoint.endpoint || 'N/A')}</td>
+                        <td style="text-align: right; padding: 8px; font-weight: 600;">${formatDuration(endpoint.avg_duration)}</td>
+                        <td style="text-align: right; padding: 8px; color: #64748b;">${endpoint.total_requests}</td>
+                        <td style="text-align: right; padding: 8px; color: ${endpoint.error_count > 0 ? '#dc2626' : '#64748b'};">${endpoint.error_count || 0}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                endpointsContainer.innerHTML = html;
+            } else {
+                endpointsContainer.innerHTML = '<div style="color: #94a3b8; text-align: center; padding: 20px;">暂无数据</div>';
+            }
+        }
+
+        async function handleClearPerformanceData() {
+            const days = prompt('请输入要保留的天数（将删除更早的性能数据）：', '30');
+            
+            if (!days) {
+                return;
+            }
+
+            const daysNum = parseInt(days, 10);
+            if (isNaN(daysNum) || daysNum < 1) {
+                alert('请输入有效的天数');
+                return;
+            }
+
+            if (!confirm(`确定要删除 ${daysNum} 天前的所有性能数据吗？此操作不可恢复！`)) {
+                return;
+            }
+
+            const performanceMessage = document.getElementById('performance-message');
+            try {
+                const response = await fetch('/api/admin/performance/cleanup', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ retentionDays: daysNum })
+                });
+
+                if (response.status === 401) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('清除失败');
+                }
+
+                const data = await response.json();
+                renderMessage(performanceMessage, data.message || '性能数据清除成功', false);
+                fetchPerformanceStats();
+            } catch (error) {
+                console.error(error);
+                renderMessage(performanceMessage, '清除性能数据失败，请稍后重试', true);
+            }
+        }
+
+        function formatDuration(ms) {
+            if (!ms || ms < 0) return '-';
+            
+            if (ms < 1000) {
+                return Math.round(ms) + ' ms';
+            } else if (ms < 60000) {
+                return (ms / 1000).toFixed(2) + ' s';
+            } else if (ms < 3600000) {
+                return (ms / 60000).toFixed(2) + ' min';
+            } else {
+                return (ms / 3600000).toFixed(2) + ' hr';
+            }
+        }
+
+        function formatNumber(num) {
+            if (!num) return '0';
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(2) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(2) + 'K';
+            }
+            return num.toString();
+        }
+    </script>
+</body>
+</html>

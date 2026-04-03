@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 心理陪伴工具</title>
+    <!-- 引入配置文件 -->
+    <script src="/config.js"></script>
+    <!-- 引入反馈组件 -->
+    <script src="/feedback-widget.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h1 {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .user-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9em;
+        }
+
+        .logout-button {
+            padding: 8px 16px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+
+        .logout-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+                align-items: stretch;
+            }
+
+            .chat-container {
+                border-radius: 0;
+                height: 100vh;
+                max-width: 100%;
+            }
+
+            .chat-header {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .chat-header h1 {
+                font-size: 1.1em;
+                flex: 1;
+                min-width: 0;
+            }
+
+            .user-controls {
+                gap: 8px;
+                font-size: 0.85em;
+            }
+
+            .logout-button {
+                padding: 6px 12px;
+                font-size: 0.85em;
+                white-space: nowrap;
+            }
+        }
+
+        .connection-status {
+            background: #f0f0f0;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            color: #666;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .connection-status.offline {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .connection-status {
+                padding: 8px 16px;
+                font-size: 0.85em;
+            }
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.ai {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.ai .message-content {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-timestamp {
+            font-size: 0.75em;
+            opacity: 0.7;
+            margin-top: 4px;
+            display: block;
+            padding: 0 16px;
+        }
+
+        .message.user .message-timestamp {
+            text-align: right;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .message.ai .message-timestamp {
+            text-align: left;
+            color: #999;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .messages-container {
+                padding: 12px;
+            }
+
+            .message {
+                margin-bottom: 12px;
+            }
+
+            .message-content {
+                max-width: 85%;
+                padding: 10px 14px;
+                font-size: 0.95em;
+                line-height: 1.5;
+            }
+
+            .message-timestamp {
+                font-size: 0.7em;
+                padding: 0 8px;
+            }
+        }
+
+        .sending-status {
+            display: inline-block;
+            font-size: 0.85em;
+            color: #888;
+            margin-left: 8px;
+            font-style: italic;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #messageInput:focus {
+            border-color: #667eea;
+        }
+
+        #sendButton {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #sendButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .input-container {
+                padding: 12px;
+                gap: 8px;
+            }
+
+            #messageInput {
+                padding: 10px 14px;
+                font-size: 16px; /* 防止iOS自动缩放 */
+                border-radius: 20px;
+            }
+
+            #sendButton {
+                padding: 10px 20px;
+                font-size: 0.9em;
+                border-radius: 20px;
+                min-width: 60px;
+            }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #f5c6cb;
+        }
+
+        .warning-message {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .error-message,
+            .warning-message {
+                padding: 8px 12px;
+                margin: 8px 0;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🧠 AI 心理陪伴工具</h1>
+            <div class="user-controls">
+                <span id="username"></span>
+                <button class="logout-button" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+        <div class="connection-status" id="connectionStatus">
+            正在连接...
+        </div>
+        <div class="messages-container" id="messagesContainer">
+            <!-- 历史记录将在这里加载 -->
+        </div>
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="输入您的消息..."
+                disabled
+            >
+            <button id="sendButton" disabled>发送</button>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let currentAIMessage = null;
+        let lastSentMessage = null; // 追踪最后发送的消息元素
+        let isProcessing = false; // 标记是否正在处理消息
+        let messageTimeout = null; // 消息超时计时器
+    const MESSAGE_TIMEOUT = 60000; // 60秒超时
+    let token = APP_CONFIG.auth.getToken();
+        let lastServerActivity = Date.now(); // 记录最后一次服务器活动时间
+        let heartbeatInterval = null; // 心跳检查定时器
+        let reconnectAttempts = 0; // 重连尝试次数
+        const MAX_RECONNECT_ATTEMPTS = 5; // 最大重连次数
+        let isReconnecting = false; // 是否正在重连
+        let authFailureHandled = false;
+
+        function handleAuthFailure(message = '登录状态已过期，请重新登录') {
+            if (authFailureHandled) return;
+            authFailureHandled = true;
+
+            try {
+                if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+                    ws.close();
+                }
+            } catch (error) {
+                // 忽略关闭错误
+            }
+
+            APP_CONFIG.auth.clearToken();
+            alert(message);
+            APP_CONFIG.auth.redirectToLogin('/chat.html');
+        }
+
+        function decodeTokenPayload(jwtToken) {
+            if (!jwtToken) return null;
+            try {
+                const payloadPart = jwtToken.split('.')[1];
+                if (!payloadPart) return null;
+                const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+                const padded = base64.padEnd(base64.length + (4 - (base64.length % 4 || 4)) % 4, '=');
+                // 使用 TextDecoder 正确解码 UTF-8 编码的中文字符
+                const binaryString = atob(padded);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const decoded = new TextDecoder('utf-8').decode(bytes);
+                return JSON.parse(decoded);
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function isTokenExpired(payload) {
+            if (!payload || !payload.exp) {
+                return true;
+            }
+            const nowInSeconds = Math.floor(Date.now() / 1000);
+            return payload.exp <= nowInSeconds;
+        }
+
+        const decodedToken = decodeTokenPayload(token);
+
+        if (!token || !decodedToken) {
+            handleAuthFailure('请先登录');
+            throw new Error('AUTH_REQUIRED');
+        }
+
+        if (isTokenExpired(decodedToken)) {
+            handleAuthFailure('登录状态已过期，请重新登录');
+            throw new Error('TOKEN_EXPIRED');
+        }
+
+        document.getElementById('username').textContent = decodedToken.name || '用户';
+
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // 网络状态监测
+        function checkNetworkStatus() {
+            if (!navigator.onLine) {
+                updateConnectionStatus('offline');
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+                return false;
+            }
+            return true;
+        }
+
+        // 监听网络状态变化
+        window.addEventListener('online', () => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                connectWebSocket();
+            }
+        });
+
+        window.addEventListener('offline', () => {
+            updateConnectionStatus('offline');
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+        });
+
+        // 监听页面可见性变化
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                // 检查 WebSocket 连接状态
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    resetChatState();
+                    connectWebSocket();
+                }
+            }
+        });
+
+        // 重置聊天状态
+        function resetChatState() {
+            // 重置处理标志
+            isProcessing = false;
+            
+            // 清除当前 AI 消息引用
+            currentAIMessage = null;
+            
+            // 清除最后发送消息引用和状态
+            if (lastSentMessage) {
+                const sendingStatus = lastSentMessage.querySelector('.sending-status');
+                if (sendingStatus) {
+                    sendingStatus.remove();
+                }
+                lastSentMessage = null;
+            }
+            
+            // 清除超时计时器
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+                messageTimeout = null;
+            }
+            
+            // 隐藏输入指示器
+            typingIndicator.classList.remove('active');
+            
+            // 如果网络在线且有 token，启用输入
+            if (navigator.onLine && token) {
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+            }
+        }
+
+        // 启动心跳检查
+        function startHeartbeatCheck() {
+            stopHeartbeatCheck(); // 先清除旧的
+            heartbeatInterval = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    // 检查是否长时间没有服务器活动
+                    const timeSinceLastActivity = Date.now() - lastServerActivity;
+                    
+                    // 如果超过 30 秒没有收到任何服务器响应（包括心跳），认为连接可能已死
+                    if (timeSinceLastActivity > 30000) {
+                        // 强制关闭当前连接并重连
+                        if (ws) {
+                            try {
+                                ws.close();
+                            } catch (e) {
+                                // 忽略关闭错误
+                            }
+                        }
+                        
+                        // 重置状态并重连
+                        resetChatState();
+                        showWarning('连接已断开，正在重连...');
+                        connectWebSocket();
+                        return;
+                    }
+                    
+                    // 如果正在处理消息且超过 MESSAGE_TIMEOUT，认为可能卡住了
+                    if (isProcessing && timeSinceLastActivity > MESSAGE_TIMEOUT) {
+                        showWarning('长时间未收到响应，已自动重置。请重试发送消息。');
+                        resetChatState();
+                    }
+                    
+                    // 发送心跳
+                    try {
+                        ws.send(JSON.stringify({ type: 'ping' }));
+                    } catch (error) {
+                        // 发送失败说明连接已经断开
+                        resetChatState();
+                        connectWebSocket();
+                    }
+                }
+            }, 15000); // 每 15 秒检查一次（Cloudflare 建议更频繁的心跳）
+        }
+
+        // 停止心跳检查
+        function stopHeartbeatCheck() {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+        }
+
+        // 设置WebSocket事件处理器
+        function setupWebSocketHandlers(websocket) {
+            websocket.onopen = () => {
+                updateConnectionStatus('connected');
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                lastServerActivity = Date.now();
+                reconnectAttempts = 0;
+                isReconnecting = false;
+                
+                // 启动心跳检查
+                startHeartbeatCheck();
+                
+                // 连接成功后加载历史记录
+                loadChatHistory();
+            };
+
+            websocket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                handleServerMessage(message);
+            };
+
+            websocket.onclose = (event) => {
+                updateConnectionStatus('disconnected');
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+                isReconnecting = false;
+
+                // 停止心跳检查
+                stopHeartbeatCheck();
+
+                // 重置状态
+                resetChatState();
+
+                // 只有在非正常关闭且页面可见时才尝试重连
+                if (event.code !== 1000 && document.visibilityState === 'visible') {
+                    reconnectAttempts++;
+                    
+                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                        showWarning(`连接已断开，正在尝试重连（${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}）...`);
+                        setTimeout(() => {
+                            if (checkNetworkStatus()) {
+                                connectWebSocket();
+                            }
+                        }, 3000);
+                    } else {
+                        showError('重连失败次数过多，请刷新页面');
+                    }
+                }
+            };
+
+            websocket.onerror = (error) => {
+                isReconnecting = false;
+                resetChatState();
+            };
+        }
+
+        // 退出登录
+        function logout() {
+            if (ws) {
+                ws.close();
+            }
+            APP_CONFIG.auth.clearToken();
+            APP_CONFIG.auth.redirectToLogin();
+        }
+
+        // 格式化时间戳
+        function formatTimestamp(date) {
+            // 确保 date 是有效的 Date 对象
+            if (!(date instanceof Date) || isNaN(date.getTime())) {
+                return '';
+            }
+            
+            const now = new Date();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            
+            // 如果是今天，只显示时间
+            if (now.toDateString() === date.toDateString()) {
+                return `${hours}:${minutes}`;
+            }
+            
+            // 如果是昨天
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (yesterday.toDateString() === date.toDateString()) {
+                return `昨天 ${hours}:${minutes}`;
+            }
+            
+            // 其他日期显示月/日 时:分
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${month}/${day} ${hours}:${minutes}`;
+        }
+
+        // 静默确保连接就绪（用于发送消息前）
+        async function ensureConnected() {
+            // 如果已连接，直接返回
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                return true;
+            }
+
+            // 如果正在连接中，等待连接完成
+            if (ws && ws.readyState === WebSocket.CONNECTING) {
+                return await waitForConnection(5000); // 最多等待 5 秒
+            }
+
+            // 如果未连接或已关闭，尝试重连
+            return await silentReconnect();
+        }
+
+        // 等待连接完成
+        function waitForConnection(timeout) {
+            return new Promise((resolve) => {
+                const startTime = Date.now();
+                const checkInterval = setInterval(() => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        clearInterval(checkInterval);
+                        resolve(true);
+                    } else if (Date.now() - startTime > timeout) {
+                        clearInterval(checkInterval);
+                        resolve(false);
+                    }
+                }, 100);
+            });
+        }
+
+        // 静默重连（不显示错误信息）
+        async function silentReconnect() {
+            // 如果已经在重连中，等待当前重连完成
+            if (isReconnecting) {
+                return await waitForConnection(5000);
+            }
+
+            // 检查网络状态
+            if (!checkNetworkStatus()) {
+                return false;
+            }
+
+            // 检查重连次数
+            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                return false;
+            }
+
+            isReconnecting = true;
+
+            // 关闭现有连接
+            if (ws) {
+                try {
+                    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                        ws.close();
+                    }
+                } catch (e) {
+                    // 忽略关闭错误
+                }
+                ws = null;
+            }
+
+            // 使用配置文件中的方法构建 WebSocket URL
+            const wsUrl = APP_CONFIG.api.getWsUrl('/api/chat/ws', { token });
+
+            try {
+                ws = new WebSocket(wsUrl);
+                setupWebSocketHandlers(ws);
+                
+                // 等待连接完成
+                const connected = await waitForConnection(5000);
+                
+                if (connected) {
+                    return true;
+                } else {
+                    reconnectAttempts++;
+                    return false;
+                }
+            } catch (error) {
+                isReconnecting = false;
+                reconnectAttempts++;
+                return false;
+            }
+        }
+
+        // 连接 WebSocket
+        function connectWebSocket() {
+            // 防止重复连接
+            if (isReconnecting) {
+                return;
+            }
+            
+            // 检查网络状态
+            if (!checkNetworkStatus()) {
+                return;
+            }
+
+            // 检查重连次数
+            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                showError('连接失败次数过多，请刷新页面重试');
+                return;
+            }
+
+            isReconnecting = true;
+
+            // 关闭现有连接
+            if (ws) {
+                try {
+                    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                        ws.close();
+                    }
+                } catch (e) {
+                    // 忽略关闭错误
+                }
+                ws = null;
+            }
+
+            // 重置聊天状态
+            resetChatState();
+
+            // 使用配置文件中的方法构建 WebSocket URL
+            const wsUrl = APP_CONFIG.api.getWsUrl('/api/chat/ws', { token });
+
+            try {
+                ws = new WebSocket(wsUrl);
+                setupWebSocketHandlers(ws);
+            } catch (error) {
+                isReconnecting = false;
+                reconnectAttempts++;
+                setTimeout(() => connectWebSocket(), 3000);
+                return;
+            }
+        }
+
+        // 加载聊天历史记录
+        async function loadChatHistory() {
+            try {
+                const response = await fetch(APP_CONFIG.api.getUrl('/api/history'), {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleAuthFailure('登录状态已过期，请重新登录');
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('加载历史记录失败');
+                }
+
+                const history = await response.json();
+                
+                // 清空消息容器
+                messagesContainer.innerHTML = '';
+                
+                if (history.length === 0) {
+                    // 如果没有历史记录，显示欢迎消息
+                    const welcomeMsg = createMessageElement('ai', '您好！有什么我可以帮助您的吗？', new Date());
+                    messagesContainer.appendChild(welcomeMsg);
+                } else {
+                    // 按时间顺序显示历史记录
+                    history.forEach(log => {
+                        // 修复时间戳解析问题：SQLite 返回的是 UTC 时间字符串
+                        // 格式类似 "2025-11-11 12:34:56"，需要正确解析
+                        let timestamp;
+                        if (log.timestamp) {
+                            // 如果时间戳中没有 'T'，说明是 SQLite 格式，需要添加 'T' 和 'Z' 来明确指定为 UTC
+                            if (log.timestamp.includes('T')) {
+                                timestamp = new Date(log.timestamp);
+                            } else {
+                                // SQLite 格式: "2025-11-11 12:34:56"
+                                // 转换为 ISO 格式: "2025-11-11T12:34:56Z"
+                                timestamp = new Date(log.timestamp.replace(' ', 'T') + 'Z');
+                            }
+                        } else {
+                            timestamp = new Date();
+                        }
+                        
+                        const sender = log.sender === 'user' ? 'user' : 'ai';
+                        const messageElement = createMessageElement(sender, log.message, timestamp);
+                        messagesContainer.appendChild(messageElement);
+                    });
+                }
+                
+                scrollToBottom();
+            } catch (error) {
+                // 即使失败也显示欢迎消息
+                const welcomeMsg = createMessageElement('ai', '您好！有什么我可以帮助您的吗？', new Date());
+                messagesContainer.appendChild(welcomeMsg);
+            }
+        }
+
+        // 处理服务器消息
+        function handleServerMessage(message) {
+            // 更新最后服务器活动时间
+            lastServerActivity = Date.now();
+            
+            switch (message.type) {
+                case 'message_received':
+                    // 用户消息已被服务器接收，移除发送中状态
+                    if (lastSentMessage) {
+                        const sendingStatus = lastSentMessage.querySelector('.sending-status');
+                        if (sendingStatus) {
+                            sendingStatus.remove();
+                        }
+                        lastSentMessage = null;
+                    }
+                    // 清除超时计时器
+                    if (messageTimeout) {
+                        clearTimeout(messageTimeout);
+                        messageTimeout = null;
+                    }
+                    break;
+
+                case 'ai_start':
+                    // AI 开始回复
+                    typingIndicator.classList.add('active');
+                    // 只有当前没有正在显示的AI消息时才创建新的
+                    if (!currentAIMessage) {
+                        currentAIMessage = createMessageElement('ai', '', new Date());
+                        messagesContainer.appendChild(currentAIMessage);
+                        scrollToBottom();
+                    }
+                    break;
+
+                case 'ai_chunk':
+                    // 接收 AI 响应片段
+                    typingIndicator.classList.remove('active');
+                    if (currentAIMessage) {
+                        const content = currentAIMessage.querySelector('.message-content');
+                        content.textContent += message.content;
+                        scrollToBottom();
+                    }
+                    break;
+
+                case 'ai_complete':
+                    // AI 响应完成
+                    typingIndicator.classList.remove('active');
+                    
+                    // 如果当前 AI 消息存在但内容为空，移除它并显示错误
+                    if (currentAIMessage) {
+                        const content = currentAIMessage.querySelector('.message-content');
+                        if (content && !content.textContent.trim()) {
+                            currentAIMessage.remove();
+                            showWarning('AI 未返回有效响应，请重新尝试');
+                        }
+                    }
+                    
+                    currentAIMessage = null;
+                    // 解锁发送
+                    unlockMessageInput();
+                    scrollToBottom();
+                    break;
+
+                case 'warning':
+                    // 显示警告消息（不会中断对话）
+                    showWarning(message.message);
+                    break;
+
+                case 'error':
+                    typingIndicator.classList.remove('active');
+                    // 移除发送中状态
+                    if (lastSentMessage) {
+                        const sendingStatus = lastSentMessage.querySelector('.sending-status');
+                        if (sendingStatus) {
+                            sendingStatus.remove();
+                        }
+                        lastSentMessage = null;
+                    }
+                    // 清除超时计时器
+                    if (messageTimeout) {
+                        clearTimeout(messageTimeout);
+                        messageTimeout = null;
+                    }
+                    // 清除当前 AI 消息
+                    currentAIMessage = null;
+                    // 解锁发送
+                    unlockMessageInput();
+                    
+                    // 如果是会话过期错误，直接要求重新登录
+                    if (message.message && message.message.includes('会话已过期')) {
+                        handleAuthFailure('会话已过期，请重新登录');
+                        return;
+                    } else {
+                        showError(message.message);
+                    }
+                    break;
+
+                case 'pong':
+                    // 心跳响应 - 更新活动时间已在函数开头处理
+                    break;
+
+                case 'heartbeat':
+                    // 服务器主动发送的心跳 - 更新活动时间已在函数开头处理
+                    break;
+            }
+        }
+
+        // 解锁消息输入
+        function unlockMessageInput() {
+            isProcessing = false;
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+        }
+
+        // 锁定消息输入
+        function lockMessageInput() {
+            isProcessing = true;
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) {
+                return;
+            }
+
+            // 检查是否正在处理消息
+            if (isProcessing) {
+                showWarning('请等待上一条消息处理完成');
+                return;
+            }
+
+            // 检查网络状态
+            if (!checkNetworkStatus()) {
+                showError('网络已断开，无法发送消息');
+                return;
+            }
+
+            // 🔥 静默检查并等待连接就绪
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                // 后台重连，不显示给用户
+                await ensureConnected();
+                
+                // 如果重连后仍未连接，则提示错误
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    showError('连接失败，请稍后重试');
+                    return;
+                }
+            }
+
+            // 锁定发送
+            lockMessageInput();
+
+            // 显示用户消息（带时间戳）
+            const userMessage = createMessageElement('user', message, new Date());
+            
+            // 添加"发送中..."状态
+            const sendingStatus = document.createElement('span');
+            sendingStatus.className = 'sending-status';
+            sendingStatus.textContent = '发送中...';
+            userMessage.appendChild(sendingStatus);
+            
+            messagesContainer.appendChild(userMessage);
+            lastSentMessage = userMessage; // 保存引用以便后续移除状态
+            scrollToBottom();
+
+            // 设置超时计时器
+            messageTimeout = setTimeout(() => {
+                if (isProcessing) {
+                    showWarning('消息处理超时，已自动解锁。如果问题持续，请刷新页面。');
+                    if (lastSentMessage) {
+                        const sendingStatus = lastSentMessage.querySelector('.sending-status');
+                        if (sendingStatus) {
+                            sendingStatus.textContent = '(发送可能失败)';
+                        }
+                    }
+                    resetChatState();
+                }
+            }, MESSAGE_TIMEOUT);
+
+            // 发送到服务器
+            try {
+                ws.send(JSON.stringify({
+                    type: 'chat',
+                    content: message
+                }));
+                messageInput.value = '';
+            } catch (error) {
+                showError('发送失败，请重试');
+                resetChatState();
+            }
+        }
+
+        // 创建消息元素
+        function createMessageElement(sender, content, timestamp) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(contentDiv);
+            
+            // 添加时间戳（在消息气泡外面）
+            if (timestamp) {
+                const timestampSpan = document.createElement('span');
+                timestampSpan.className = 'message-timestamp';
+                timestampSpan.textContent = formatTimestamp(timestamp);
+                messageDiv.appendChild(timestampSpan);
+            }
+            
+            return messageDiv;
+        }
+
+        // 显示错误
+        function showError(errorMessage) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = errorMessage;
+            messagesContainer.appendChild(errorDiv);
+            scrollToBottom();
+
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        // 显示警告
+        function showWarning(warningMessage) {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'warning-message';
+            warningDiv.textContent = '⚠️ ' + warningMessage;
+            messagesContainer.appendChild(warningDiv);
+            scrollToBottom();
+
+            setTimeout(() => {
+                warningDiv.remove();
+            }, 5000);
+        }
+
+        // 更新连接状态
+        function updateConnectionStatus(status) {
+            connectionStatus.className = `connection-status ${status}`;
+            if (status === 'connected') {
+                connectionStatus.textContent = '✓ 已连接';
+            } else if (status === 'disconnected') {
+                connectionStatus.textContent = '✗ 连接已断开';
+            } else if (status === 'offline') {
+                connectionStatus.textContent = '⚠ 网络离线';
+            } else {
+                connectionStatus.textContent = '⟳ 正在连接...';
+            }
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // 事件监听
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+
+        // 启动连接
+        checkNetworkStatus(); // 初始检查网络状态
+        if (navigator.onLine) {
+            connectWebSocket();
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录 - AI 情感陪伴工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 1.8em;
+        }
+        .subtitle {
+            margin-bottom: 24px;
+            color: #666;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px; /* 防止iOS自动缩放 */
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #c82333;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        /* 加载动画 */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .message {
+            margin-top: 16px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+            font-size: 0.95em;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .back-link {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .back-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            .container {
+                padding: 28px 20px;
+                max-width: 100%;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 6px;
+            }
+
+            .subtitle {
+                font-size: 13px;
+                margin-bottom: 20px;
+            }
+
+            input {
+                padding: 14px 15px;
+                margin-bottom: 14px;
+            }
+
+            button {
+                padding: 14px 12px;
+            }
+
+            .back-link {
+                margin-top: 16px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px 16px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 管理员登录</h1>
+        <div class="subtitle">请输入后台管理口令</div>
+        <form id="adminLoginForm">
+            <input type="password" id="secret" placeholder="请输入后台口令" required autocomplete="off">
+            <button type="submit">登录后台</button>
+        </form>
+        <div id="messageBox" class="message"></div>
+        <div class="back-link">
+            <a href="/login.html">← 返回用户登录</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('adminLoginForm');
+        const secretInput = document.getElementById('secret');
+        const messageBox = document.getElementById('messageBox');
+
+        // 检查是否已经登录并验证 token 有效性
+        async function checkExistingAuth() {
+            const existingToken = localStorage.getItem('adminToken');
+            
+            if (existingToken) {
+                try {
+                    // 验证 token 是否有效
+                    const response = await fetch('/api/admin/users', {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${existingToken}` }
+                    });
+
+                    if (response.ok) {
+                        // Token 有效，跳转到后台
+                        window.location.href = '/admin.html';
+                        return;
+                    } else {
+                        // Token 无效，清除它
+                        localStorage.removeItem('adminToken');
+                    }
+                } catch (error) {
+                    // 网络错误或其他问题，清除 token
+                    localStorage.removeItem('adminToken');
+                }
+            }
+        }
+
+        // 页面加载时检查认证状态
+        checkExistingAuth();
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const secret = secretInput.value;
+
+            if (!secret) {
+                showMessage('请输入后台口令', 'error');
+                return;
+            }
+
+            // 获取提交按钮并添加加载状态
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner"></span>登录中...';
+
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ secret })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 将管理员 token 存储到 localStorage
+                    localStorage.setItem('adminToken', data.token);
+
+                    showMessage('登录成功！正在进入后台...', 'success');
+                    
+                    // 登录成功后跳转到管理后台
+                    setTimeout(() => {
+                        window.location.href = '/admin.html';
+                    }, 1000);
+
+                } else {
+                    const errorMessage = await response.text();
+                    showMessage(errorMessage, 'error');
+                    secretInput.value = '';
+                    // 恢复按钮状态
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }
+            } catch (error) {
+                showMessage('网络错误，请稍后重试', 'error');
+                console.error('登录请求失败:', error);
+                // 恢复按钮状态
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        });
+
+        function showMessage(msg, type) {
+            messageBox.textContent = msg;
+            messageBox.className = `message ${type}`;
+            messageBox.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

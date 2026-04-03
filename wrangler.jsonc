@@ -1,0 +1,109 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "my-ai-consultant-app",
+	"main": "src/index.js",
+	"compatibility_date": "2025-11-06",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./public"
+	},
+	"d1_databases": [
+		{
+			"binding": "ai_psychology_db",
+			"database_name": "ai-psychology-db",
+			"database_id": "cfd90d9a-f150-4559-9cf1-0999fd025506"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "CHAT_SESSION",
+				"class_name": "ChatSession",
+				"script_name": "my-ai-consultant-app"
+			}
+		]
+	},
+	"placement": {
+		"mode": "smart"
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"ChatSession"
+			]
+		}
+	],
+	// Analytics Engine需要在Cloudflare Dashboard中启用
+	// "analytics_engine_datasets": [
+	// 	{
+	// 		"binding": "WORKERS_LOGS",
+	// 		"dataset": "workers_logs"
+	// 	}
+	// ],
+	// "tail_consumers": [
+	// 	{
+	// 		"service": "my-ai-consultant-app-logs"
+	// 	}
+	// ],
+	/**
+	 * Cron Triggers
+	 * Schedule periodic tasks to run on your Worker
+	 * https://developers.cloudflare.com/workers/configuration/cron-triggers/
+	 */
+	"triggers": {
+		"crons": [
+			// Run data retention cleanup daily at 2:00 AM UTC
+			"0 2 * * *"
+		]
+	},
+	/**
+	 * Bindings
+	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+	 * databases, object storage, AI inference, real-time communication and more.
+	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+	 */
+	/**
+	 * Environment Variables
+	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+	 */
+	"vars": {
+		// 非敏感环境变量（公开信息）
+		// 开发时使用 "development" 可以看到调试日志
+		// 生产环境使用 "production" 避免额外的日志费用
+		"ENVIRONMENT": "development"
+	}
+	/**
+	 * Secrets (敏感信息，使用 wrangler secret 命令配置)
+	 * - DEEPSEEK_API_KEY: DeepSeek API 密钥
+	 * - JWT_SECRET: JWT 签名密钥
+	 * - ADMIN_PASSWORD: 管理员后台密码
+	 * 
+	 * 配置命令：
+	 * npx wrangler secret put DEEPSEEK_API_KEY
+	 * npx wrangler secret put JWT_SECRET
+	 * npx wrangler secret put ADMIN_PASSWORD
+	 */
+	/**
+	 * Note: Use secrets to store sensitive data.
+	 * https://developers.cloudflare.com/workers/configuration/secrets/
+	 */
+	/**
+	 * Static Assets
+	 * https://developers.cloudflare.com/workers/static-assets/binding/
+	 */
+	// "assets": { "directory": "./public/", "binding": "ASSETS" }
+	/**
+	 * Service Bindings (communicate between multiple Workers)
+	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
+	 */
+	// "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
+}

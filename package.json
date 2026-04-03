@@ -1,0 +1,21 @@
+{
+	"name": "my-ai-consultant-app",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"@cloudflare/workers-types": "^4.20251109.0",
+		"vitest": "~3.2.0",
+		"wrangler": "^4.46.0"
+	},
+	"dependencies": {
+		"@tsndr/cloudflare-worker-jwt": "^3.2.0",
+		"bcryptjs": "^3.0.3"
+	}
+}
